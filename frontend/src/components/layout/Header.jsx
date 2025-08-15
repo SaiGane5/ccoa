@@ -8,7 +8,7 @@ const Header = ({ onHomeClick }) => {
         CCOA
       </button>
       <a
-        href="https://github.com/google/gemini-api" // Replace with your actual repo link
+        href="https://github.com/SaiGane5/ccoa.git" // Replace with your actual repo link
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center gap-2 text-gray-400 transition-colors hover:text-white"
