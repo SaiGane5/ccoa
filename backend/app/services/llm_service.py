@@ -65,12 +65,40 @@ def generate_onboarding_plan(repo_structure: str):
     try:
         logger.info("Generating enhanced onboarding plan with Gemini...")
         response = model.generate_content(prompt)
-        cleaned_response = response.text.strip().replace("``````", "")
+
+        # ✅ START: Add robust response validation
+        if not response.candidates:
+            logger.error("Gemini response was blocked or empty. No candidates returned.")
+            # Check the prompt feedback for block reasons
+            if response.prompt_feedback and response.prompt_feedback.block_reason:
+                block_reason = response.prompt_feedback.block_reason.name
+                logger.error(f"Prompt was blocked due to: {block_reason}")
+                raise ValueError(f"The request was blocked by safety settings: {block_reason}")
+            raise ValueError("The request failed as the response from the AI was empty.")
+
+        # The 'text' attribute can throw an error if the response was blocked
+        if not hasattr(response, 'text'):
+            finish_reason = response.candidates[0].finish_reason.name
+            logger.error(f"Gemini response finished with reason: {finish_reason}")
+            raise ValueError(f"The request was blocked by safety settings, finish reason: {finish_reason}")
+        # ✅ END: Add robust response validation
+
+        cleaned_response = response.text.strip().replace("```json", "").replace("```", "")
+        
+        # Another check to ensure the string is not empty after cleaning
+        if not cleaned_response:
+             raise ValueError("The AI returned an empty JSON string after cleaning.")
+
         return json.loads(cleaned_response)
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to decode JSON from Gemini response. Error: {e}")
+        logger.error(f"Faulty Gemini response text was: {response.text}")
+        raise ValueError("The AI returned a malformed JSON response.") from e
     except Exception as e:
         logger.error(f"Error generating onboarding plan with Gemini: {e}")
-        logger.error(f"Gemini response was: {response.text if 'response' in locals() else 'No response received'}")
         raise
+
 
 def generate_chat_response(query: str, context_documents: list, context_metadatas: list):
     """
