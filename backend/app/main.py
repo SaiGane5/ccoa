@@ -9,23 +9,25 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS (Cross-Origin Resource Sharing) Middleware
-# This is necessary to allow the frontend (running on a different port)
-# to communicate with the backend.
+# ~ Define the specific origins that are allowed to make requests.
+allowed_origins = [
+    "https://ccoa-smoky.vercel.app",  # Your production frontend
+    "http://localhost:5173",         # Your local development frontend
+]
+
+# ~ Update the CORS Middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=allowed_origins, # Use the specific list of origins
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],           # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],           # Allows all headers
 )
-
 
 @app.get("/", tags=["Root"])
 async def read_root():
     """ A simple health check endpoint. """
     return {"message": "CCOA Backend is running!"}
-
 
 # Include the API router
 app.include_router(onboarding.router, prefix=settings.API_V1_STR, tags=["Onboarding"])
